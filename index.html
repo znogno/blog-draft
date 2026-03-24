@@ -1,1 +1,508 @@
+<!DOCTYPE html>
 
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>83돼지 블로그 초안 생성기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f2f2f7;
+    --surface: #ffffff;
+    --surface2: #f2f2f7;
+    --surface3: #e5e5ea;
+    --border: rgba(0,0,0,0.08);
+    --text: #1c1c1e;
+    --text-muted: #8e8e93;
+    --text-dim: #c7c7cc;
+    --blue: #007aff;
+    --green: #34c759;
+    --orange: #ff9500;
+    --red: #ff3b30;
+    --purple: #af52de;
+    --shadow-sm: 0 1px 8px rgba(0,0,0,0.06);
+    --radius: 16px;
+    --radius-sm: 12px;
+  }
+
+- { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘Noto Sans KR’, -apple-system, sans-serif;
+min-height: 100vh;
+padding-bottom: 40px;
+-webkit-font-smoothing: antialiased;
+}
+
+.app { max-width: 480px; margin: 0 auto; }
+
+.header {
+background: rgba(255,255,255,0.9);
+backdrop-filter: blur(20px);
+-webkit-backdrop-filter: blur(20px);
+padding: 52px 20px 16px;
+position: sticky; top: 0; z-index: 50;
+border-bottom: 1px solid var(–border);
+}
+
+.header h1 { font-size: 26px; font-weight: 900; color: var(–text); letter-spacing: -0.5px; }
+.header h1 span { color: var(–blue); }
+.header p { font-size: 13px; color: var(–text-muted); margin-top: 3px; }
+
+.content { padding: 16px; }
+
+.card {
+background: var(–surface);
+border-radius: var(–radius);
+padding: 16px;
+margin-bottom: 12px;
+box-shadow: var(–shadow-sm);
+}
+
+.card-title {
+font-size: 12px; font-weight: 700;
+color: var(–text-muted); letter-spacing: 0.5px;
+text-transform: uppercase; margin-bottom: 12px;
+}
+
+.api-row { display: flex; gap: 8px; }
+.api-row input { flex: 1; }
+.api-save-btn {
+background: var(–blue); border: none; border-radius: 10px;
+color: white; font-size: 13px; font-weight: 600;
+padding: 0 14px; cursor: pointer;
+font-family: ‘Noto Sans KR’, sans-serif;
+white-space: nowrap;
+}
+.api-status { font-size: 12px; margin-top: 6px; }
+.api-status.ok { color: var(–green); }
+.api-status.err { color: var(–red); }
+
+.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.cat-btn {
+padding: 14px 10px;
+border: 2px solid transparent;
+border-radius: var(–radius-sm);
+background: var(–surface2);
+cursor: pointer; transition: all 0.15s;
+text-align: center;
+}
+
+.cat-btn .cat-icon { font-size: 24px; display: block; margin-bottom: 5px; }
+.cat-btn .cat-name { font-size: 12px; font-weight: 700; color: var(–text); display: block; }
+.cat-btn .cat-sub { font-size: 10px; color: var(–text-muted); display: block; margin-top: 2px; }
+
+.cat-btn.selected-재테크 { border-color: var(–green); background: rgba(52,199,89,0.08); }
+.cat-btn.selected-골프 { border-color: var(–blue); background: rgba(0,122,255,0.08); }
+.cat-btn.selected-헬스 { border-color: var(–orange); background: rgba(255,149,0,0.08); }
+.cat-btn.selected-일기 { border-color: var(–purple); background: rgba(175,82,222,0.08); }
+
+.input-group { margin-bottom: 10px; }
+.input-group:last-child { margin-bottom: 0; }
+.input-group label { display: block; font-size: 13px; font-weight: 500; color: var(–text-muted); margin-bottom: 5px; }
+
+input[type=“text”], textarea {
+width: 100%; background: var(–surface2); border: none;
+border-radius: 10px; padding: 11px 13px;
+color: var(–text); font-size: 15px;
+font-family: ‘Noto Sans KR’, sans-serif;
+outline: none; transition: background 0.15s;
+-webkit-appearance: none; appearance: none;
+box-sizing: border-box;
+}
+
+input[type=“text”]:focus, textarea:focus { background: #ebebf0; }
+textarea { resize: none; line-height: 1.6; }
+
+.generate-btn {
+width: 100%; padding: 15px;
+background: var(–blue); border: none;
+border-radius: var(–radius); color: white;
+font-size: 16px; font-weight: 700;
+font-family: ‘Noto Sans KR’, sans-serif;
+cursor: pointer; transition: all 0.15s;
+box-shadow: 0 4px 16px rgba(0,122,255,0.3);
+display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.generate-btn:active { opacity: 0.85; }
+.generate-btn:disabled { background: var(–surface3); color: var(–text-dim); box-shadow: none; cursor: not-allowed; }
+
+.spinner {
+width: 18px; height: 18px;
+border: 2px solid rgba(255,255,255,0.4);
+border-top-color: white;
+border-radius: 50%;
+animation: spin 0.8s linear infinite;
+display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.result-card {
+background: var(–surface);
+border-radius: var(–radius);
+padding: 20px; margin-top: 12px;
+box-shadow: var(–shadow-sm);
+display: none;
+animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.result-label { font-size: 12px; font-weight: 700; color: var(–text-muted); text-transform: uppercase; }
+.result-actions { display: flex; gap: 6px; }
+
+.action-btn {
+background: var(–surface2); border: none; border-radius: 8px;
+color: var(–text-muted); font-size: 12px; font-weight: 600;
+padding: 6px 12px; cursor: pointer;
+font-family: ‘Noto Sans KR’, sans-serif;
+}
+.action-btn.copy-done { color: var(–green); }
+
+.result-title {
+font-size: 17px; font-weight: 800;
+color: var(–text); margin-bottom: 14px;
+line-height: 1.4; letter-spacing: -0.3px;
+padding-bottom: 12px;
+border-bottom: 1px solid var(–border);
+}
+
+.result-body {
+font-size: 15px; color: var(–text);
+line-height: 1.85; white-space: pre-wrap;
+word-break: keep-all;
+}
+
+.regen-btn {
+width: 100%; padding: 12px;
+background: var(–surface2); border: none;
+border-radius: var(–radius-sm);
+color: var(–blue); font-size: 14px; font-weight: 600;
+font-family: ‘Noto Sans KR’, sans-serif;
+cursor: pointer; margin-top: 12px;
+}
+
+.tag {
+display: inline-block; padding: 3px 10px;
+border-radius: 20px; font-size: 12px; font-weight: 600;
+margin-bottom: 10px;
+}
+.tag-재테크 { background: rgba(52,199,89,0.12); color: var(–green); }
+.tag-골프 { background: rgba(0,122,255,0.12); color: var(–blue); }
+.tag-헬스 { background: rgba(255,149,0,0.12); color: var(–orange); }
+.tag-일기 { background: rgba(175,82,222,0.12); color: var(–purple); }
+
+.toast {
+position: fixed; bottom: 32px; left: 50%;
+transform: translateX(-50%) translateY(20px);
+background: rgba(28,28,30,0.92);
+backdrop-filter: blur(10px);
+color: white; padding: 11px 22px;
+border-radius: 22px; font-size: 14px; font-weight: 500;
+opacity: 0; transition: all 0.3s; z-index: 200; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <h1>🐷 블로그 <span>초안</span> 생성기</h1>
+    <p>83돼지 네이버 블로그 전용</p>
+  </div>
+
+  <div class="content">
+
+```
+<div class="card">
+  <div class="card-title">🔑 API 키 설정</div>
+  <div class="api-row">
+    <input type="text" id="apiKeyInput" placeholder="sk-ant-api03-..." style="font-size:13px;">
+    <button class="api-save-btn" onclick="saveApiKey()">저장</button>
+  </div>
+  <div class="api-status" id="apiStatus"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">📂 카테고리 선택</div>
+  <div class="cat-grid">
+    <button class="cat-btn" onclick="selectCat('재테크', this)">
+      <span class="cat-icon">💰</span>
+      <span class="cat-name">돼지의 재테크 일지</span>
+      <span class="cat-sub">투자 · 절약 · 돈</span>
+    </button>
+    <button class="cat-btn" onclick="selectCat('골프', this)">
+      <span class="cat-icon">⛳</span>
+      <span class="cat-name">아재의 골프 일기</span>
+      <span class="cat-sub">라운딩 · 연습 · 장비</span>
+    </button>
+    <button class="cat-btn" onclick="selectCat('헬스', this)">
+      <span class="cat-icon">💪</span>
+      <span class="cat-name">40대 헬스 도전기</span>
+      <span class="cat-sub">운동 · 건강 · 몸관리</span>
+    </button>
+    <button class="cat-btn" onclick="selectCat('일기', this)">
+      <span class="cat-icon">📝</span>
+      <span class="cat-name">83돼지 일기장</span>
+      <span class="cat-sub">일상 · 먹방 · 잡담</span>
+    </button>
+  </div>
+</div>
+
+<div class="card" id="inputCard" style="display:none;">
+  <div class="card-title" id="inputCardTitle">✏️ 내용 입력</div>
+  <div id="inputFields"></div>
+</div>
+
+<button class="generate-btn" id="generateBtn" onclick="generate()" disabled>
+  <div class="spinner" id="spinner"></div>
+  <span id="generateBtnText">카테고리를 먼저 선택해주세요</span>
+</button>
+
+<div class="result-card" id="resultCard">
+  <div class="result-header">
+    <span class="result-label">생성된 초안</span>
+    <div class="result-actions">
+      <button class="action-btn" id="copyTitleBtn" onclick="copyTitle()">제목 복사</button>
+      <button class="action-btn" id="copyAllBtn" onclick="copyAll()">전체 복사</button>
+    </div>
+  </div>
+  <div class="tag" id="resultTag"></div>
+  <div class="result-title" id="resultTitle"></div>
+  <div class="result-body" id="resultBody"></div>
+  <button class="regen-btn" onclick="generate()">🔄 다시 생성</button>
+</div>
+```
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedCat = '';
+let apiKey = localStorage.getItem('pig_api_key') || '';
+
+if(apiKey) {
+  document.getElementById('apiKeyInput').value = apiKey.slice(0,16) + '••••••••';
+  document.getElementById('apiStatus').textContent = '✅ API 키가 저장되어 있어요';
+  document.getElementById('apiStatus').className = 'api-status ok';
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if(!val.startsWith('sk-ant-')) {
+    document.getElementById('apiStatus').textContent = '❌ 올바른 API 키가 아니에요';
+    document.getElementById('apiStatus').className = 'api-status err';
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem('pig_api_key', val);
+  document.getElementById('apiKeyInput').value = val.slice(0,16) + '••••••••';
+  document.getElementById('apiStatus').textContent = '✅ API 키 저장 완료!';
+  document.getElementById('apiStatus').className = 'api-status ok';
+  showToast('✅ 저장됐어요');
+}
+
+const catFields = {
+  재테크: {
+    title: '✏️ 재테크 글 내용',
+    fields: [
+      { id: 'topic', label: '주제', placeholder: '예: ISA 계좌 개설, ETF 첫 구매, 적금 만기 등' },
+      { id: 'detail', label: '핵심 내용', placeholder: '예: 수익률 5%, 세금 혜택 있음, 3년 유지 필요', textarea: true },
+      { id: 'feel', label: '느낀 점', placeholder: '예: 생각보다 쉬웠다, 좀 더 일찍 할걸' }
+    ]
+  },
+  골프: {
+    title: '✏️ 골프 글 내용',
+    fields: [
+      { id: 'location', label: '장소', placeholder: '예: OO CC, 스크린골프, 연습장' },
+      { id: 'score', label: '스코어 or 연습 내용', placeholder: '예: 94타, 드라이버 150개 연습' },
+      { id: 'detail', label: '오늘 하이라이트', placeholder: '예: 파4 버디, 아이언이 계속 뒤땅', textarea: true },
+      { id: 'feel', label: '느낀 점', placeholder: '예: 오늘따라 집중이 잘 됐다' }
+    ]
+  },
+  헬스: {
+    title: '✏️ 헬스 글 내용',
+    fields: [
+      { id: 'parts', label: '운동 부위', placeholder: '예: 상체, 하체, 전신' },
+      { id: 'exercises', label: '종목 & 무게', placeholder: '예: 벤치프레스 60kg, 풀업 8개', textarea: true },
+      { id: 'condition', label: '오늘 컨디션', placeholder: '예: 피곤했는데 가서 개운해짐' },
+      { id: 'feel', label: '느낀 점', placeholder: '예: 풀업 10개가 목표다' }
+    ]
+  },
+  일기: {
+    title: '✏️ 일기 내용',
+    fields: [
+      { id: 'topic', label: '오늘 주제', placeholder: '예: 점심 맛집 발견, 주말 가족 나들이' },
+      { id: 'detail', label: '있었던 일', placeholder: '자유롭게 써주세요', textarea: true },
+      { id: 'feel', label: '오늘 한마디', placeholder: '예: 소소하지만 행복한 하루' }
+    ]
+  }
+};
+
+function selectCat(cat, btn) {
+  selectedCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.className = 'cat-btn');
+  btn.className = `cat-btn selected-${cat}`;
+
+  const cfg = catFields[cat];
+  document.getElementById('inputCardTitle').textContent = cfg.title;
+  document.getElementById('inputFields').innerHTML = cfg.fields.map(f => `
+    <div class="input-group">
+      <label>${f.label}</label>
+      ${f.textarea
+        ? `<textarea id="field_${f.id}" placeholder="${f.placeholder}" style="height:75px;"></textarea>`
+
+```
+    : `<input type="text" id="field_${f.id}" placeholder="${f.placeholder}">`
+  }
+</div>
+```
+
+`).join(’’);
+
+document.getElementById(‘inputCard’).style.display = ‘block’;
+document.getElementById(‘generateBtn’).disabled = false;
+document.getElementById(‘generateBtnText’).textContent = ‘✨ 블로그 초안 생성하기’;
+}
+
+function buildPrompt(cat) {
+const fields = catFields[cat].fields;
+const v = {};
+fields.forEach(f => {
+const el = document.getElementById(`field_${f.id}`);
+v[f.id] = el ? el.value.trim() : ‘’;
+});
+
+const persona = `너는 1983년생 43살 평범한 직장인 남성이야. 골프랑 헬스 좋아하는 아재고, 재테크도 열심히 하는 중이야.
+블로그 글 스타일:
+
+- 일기 쓰듯이 솔직하고 자연스럽게
+- 절대 AI가 쓴 느낌 나면 안 됨
+- 너무 정리된 느낌, 교과서 같은 표현 금지
+- 문장은 자연스럽게 이어지되 너무 길지 않게
+- 한 문단 2~3문장, 문단 나눔 유지
+- 40대 직장인 공감 표현 사용
+- 마지막은 독자한테 말 건네는 한 줄로 마무리
+- 제목은 네이버 블로그에서 클릭하고 싶은 스타일로
+- 응답은 반드시 [제목] 형식으로 첫 줄에 제목, 그 다음 본문`;
+  
+  const prompts = {
+  재테크: `${persona}\n\n카테고리: 돼지의 재테크 일지\n주제: ${v.topic}\n핵심 내용: ${v.detail}\n느낀 점: ${v.feel}\n\n위 내용으로 블로그 초안을 써줘. 어렵지 않게, 평범한 직장인 입장에서.`,
+  골프: `${persona}\n\n카테고리: 아재의 골프 일기\n장소: ${v.location}\n스코어/연습: ${v.score}\n하이라이트: ${v.detail}\n느낀 점: ${v.feel}\n\n위 내용으로 블로그 초안을 써줘. 잘하는 척 말고 솔직하게.`,
+  헬스: `${persona}\n\n카테고리: 40대 헬스 도전기\n운동 부위: ${v.parts}\n운동 내용: ${v.exercises}\n컨디션: ${v.condition}\n느낀 점: ${v.feel}\n\n위 내용으로 블로그 초안을 써줘. 40대 몸의 현실 솔직하게.`,
+  일기: `${persona}\n\n카테고리: 83돼지 일기장\n주제: ${v.topic}\n있었던 일: ${v.detail}\n오늘 한마디: ${v.feel}\n\n위 내용으로 블로그 초안을 써줘. 소소하고 따뜻하게.`
+  };
+  
+  return prompts[cat];
+  }
+
+async function generate() {
+if(!apiKey) { showToast(‘❌ API 키를 먼저 입력해주세요’); return; }
+if(!selectedCat) { showToast(‘카테고리를 선택해주세요’); return; }
+
+const btn = document.getElementById(‘generateBtn’);
+const spinner = document.getElementById(‘spinner’);
+const btnText = document.getElementById(‘generateBtnText’);
+
+btn.disabled = true;
+spinner.style.display = ‘block’;
+btnText.textContent = ‘생성 중…’;
+
+try {
+const res = await fetch(‘https://api.anthropic.com/v1/messages’, {
+method: ‘POST’,
+headers: {
+‘Content-Type’: ‘application/json’,
+‘x-api-key’: apiKey,
+‘anthropic-version’: ‘2023-06-01’,
+‘anthropic-dangerous-direct-browser-access’: ‘true’
+},
+body: JSON.stringify({
+model: ‘claude-haiku-4-5-20251001’,
+max_tokens: 1000,
+messages: [{ role: ‘user’, content: buildPrompt(selectedCat) }]
+})
+});
+
+```
+const data = await res.json();
+
+if(data.error) {
+  showToast('❌ ' + (data.error.message || 'API 오류'));
+  return;
+}
+
+const text = data.content[0].text.trim();
+const lines = text.split('\n').filter(l => l.trim());
+let title = '', body = '';
+
+for(let i = 0; i < lines.length; i++) {
+  const line = lines[i].trim();
+  if(line.startsWith('[') && line.includes(']')) {
+    title = line.slice(line.indexOf('[')+1, line.lastIndexOf(']'));
+    body = lines.slice(i+1).join('\n').trim();
+    break;
+  } else if(i === 0) {
+    title = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim();
+    body = lines.slice(1).join('\n').trim();
+    break;
+  }
+}
+
+const labels = { 재테크:'💰 돼지의 재테크 일지', 골프:'⛳ 아재의 골프 일기', 헬스:'💪 40대 헬스 도전기', 일기:'📝 83돼지 일기장' };
+
+document.getElementById('resultTag').textContent = labels[selectedCat];
+document.getElementById('resultTag').className = `tag tag-${selectedCat}`;
+document.getElementById('resultTitle').textContent = title;
+document.getElementById('resultBody').textContent = body;
+document.getElementById('resultCard').style.display = 'block';
+document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+```
+
+} catch(err) {
+showToast(‘❌ 오류 발생. API 키를 확인해주세요’);
+console.error(err);
+} finally {
+btn.disabled = false;
+spinner.style.display = ‘none’;
+btnText.textContent = ‘✨ 블로그 초안 생성하기’;
+}
+}
+
+function copyTitle() {
+const title = document.getElementById(‘resultTitle’).textContent;
+navigator.clipboard.writeText(title).then(() => {
+const btn = document.getElementById(‘copyTitleBtn’);
+btn.textContent = ‘✓ 복사됨’; btn.classList.add(‘copy-done’);
+setTimeout(() => { btn.textContent = ‘제목 복사’; btn.classList.remove(‘copy-done’); }, 2000);
+});
+}
+
+function copyAll() {
+const title = document.getElementById(‘resultTitle’).textContent;
+const body = document.getElementById(‘resultBody’).textContent;
+navigator.clipboard.writeText(`${title}\n\n${body}`).then(() => {
+const btn = document.getElementById(‘copyAllBtn’);
+btn.textContent = ‘✓ 복사됨’; btn.classList.add(‘copy-done’);
+setTimeout(() => { btn.textContent = ‘전체 복사’; btn.classList.remove(‘copy-done’); }, 2000);
+showToast(‘📋 클립보드에 복사됐어요!’);
+});
+}
+
+function showToast(msg) {
+const t = document.getElementById(‘toast’);
+t.textContent = msg; t.classList.add(‘show’);
+setTimeout(() => t.classList.remove(‘show’), 2500);
+}
+</script>
+
+</body>
+</html>
